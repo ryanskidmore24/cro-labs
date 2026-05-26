@@ -1,0 +1,321 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  TESTER
+  VIEWER
+  REVIEWER
+}
+
+enum IntegrationType {
+  GA4
+  SEARCH_CONSOLE
+  CLARITY
+  SHOPIFY
+}
+
+enum TestStatus {
+  DRAFT
+  QUEUED
+  RUNNING
+  COMPLETED
+  SHIPPED
+  ARCHIVED
+}
+
+enum PrimaryKpi {
+  CVR
+  REVENUE
+  AOV
+  SUBSCRIPTION_RATE
+  CUSTOM
+}
+
+enum DeviceTarget {
+  ALL
+  MOBILE
+  DESKTOP
+  TABLET
+}
+
+enum EffortEstimate {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SignalType {
+  HIGH_DROPOFF
+  LOW_CTR
+  FORM_ABANDONMENT
+  RAGE_CLICK
+  SLOW_LOAD
+  HIGH_BOUNCE
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EventType {
+  IMPRESSION
+  CLICK
+  CONVERSION
+  FORM_SUBMIT
+  SCROLL
+  CUSTOM
+}
+
+enum AiModel {
+  CLAUDE
+  GEMINI
+}
+
+enum HypothesisStatus {
+  SUGGESTED
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+}
+
+enum GuardrailMetricType {
+  AOV
+  CART_ABANDONMENT
+  PAGE_LOAD
+  REFUND_RATE
+  CUSTOM
+}
+
+enum GuardrailOperator {
+  GT
+  LT
+  GTE
+  LTE
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  role      UserRole @default(VIEWER)
+  avatar    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  integrations Integration[]
+  tests        Test[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Integration {
+  id           String          @id @default(uuid()) @db.Uuid
+  userId       String          @map("user_id") @db.Uuid
+  type         IntegrationType
+  accessToken  String          @map("access_token")
+  refreshToken String?         @map("refresh_token")
+  expiresAt    DateTime?       @map("expires_at")
+  metadata     Json?
+  enabled      Boolean         @default(true)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("integrations")
+}
+
+model Test {
+  id                   String         @id @default(uuid()) @db.Uuid
+  name                 String
+  description          String?
+  hypothesis           String?
+  status               TestStatus     @default(DRAFT)
+  primaryKpi           PrimaryKpi     @map("primary_kpi")
+  targetUrl            String?        @map("target_url")
+  deviceTarget         DeviceTarget   @default(ALL) @map("device_target")
+  trafficPercent       Int            @default(100) @map("traffic_percent")
+  trafficSplit         Json?          @map("traffic_split")
+  audienceFilters      Json?          @map("audience_filters")
+  projectedRevenueLift Float?         @map("projected_revenue_lift")
+  effortEstimate       EffortEstimate? @map("effort_estimate")
+  priority             Int            @default(0)
+  ownerId              String         @map("owner_id") @db.Uuid
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+  startedAt            DateTime?      @map("started_at")
+  endedAt              DateTime?      @map("ended_at")
+
+  owner           User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  variants        Variant[]
+  results         TestResult[]
+  hypotheses      Hypothesis[]
+  events          TestEvent[]
+  guardrailMetrics GuardrailMetric[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([primaryKpi])
+  @@index([createdAt])
+  @@map("tests")
+}
+
+model Variant {
+  id            String   @id @default(uuid()) @db.Uuid
+  testId        String   @map("test_id") @db.Uuid
+  name          String
+  isControl     Boolean  @default(false) @map("is_control")
+  trafficWeight Int      @default(50) @map("traffic_weight")
+  domChanges    Json?    @map("dom_changes")
+  cssChanges    String?  @map("css_changes")
+  jsChanges     String?  @map("js_changes")
+  screenshotUrl String?  @map("screenshot_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  test    Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  results TestResult[]
+  events  TestEvent[]
+
+  @@index([testId])
+  @@map("variants")
+}
+
+model TestResult {
+  id                   String   @id @default(uuid()) @db.Uuid
+  testId               String   @map("test_id") @db.Uuid
+  variantId            String   @map("variant_id") @db.Uuid
+  impressions          Int      @default(0)
+  conversions          Int      @default(0)
+  revenue              Float    @default(0)
+  aov                  Float    @default(0)
+  subscriptionRate     Float?   @map("subscription_rate")
+  bayesianProbability  Float?   @map("bayesian_probability")
+  credibleIntervalLow  Float?   @map("credible_interval_low")
+  credibleIntervalHigh Float?   @map("credible_interval_high")
+  liftPercent          Float?   @map("lift_percent")
+  guardrailViolations  Json?    @map("guardrail_violations")
+  computedAt           DateTime @default(now()) @map("computed_at")
+
+  test    Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@index([variantId])
+  @@index([computedAt])
+  @@map("test_results")
+}
+
+model Hypothesis {
+  id              String           @id @default(uuid()) @db.Uuid
+  testId          String?          @map("test_id") @db.Uuid
+  frictionSignal  String?          @map("friction_signal")
+  suggestedChange String?          @map("suggested_change")
+  predictedKpi    String?          @map("predicted_kpi")
+  predictedLift   Float?           @map("predicted_lift")
+  confidenceScore Float?           @map("confidence_score")
+  effort          EffortEstimate?
+  aiModel         AiModel?         @map("ai_model")
+  evidenceData    Json?            @map("evidence_data")
+  status          HypothesisStatus @default(SUGGESTED)
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  test Test? @relation(fields: [testId], references: [id], onDelete: SetNull)
+
+  @@index([testId])
+  @@index([status])
+  @@index([aiModel])
+  @@map("hypotheses")
+}
+
+model FrictionSignal {
+  id         String     @id @default(uuid()) @db.Uuid
+  pageUrl    String     @map("page_url")
+  signalType SignalType @map("signal_type")
+  severity   Severity
+  metric     Float
+  baseline   Float
+  detectedAt DateTime   @default(now()) @map("detected_at")
+  resolvedAt DateTime?  @map("resolved_at")
+  metadata   Json?
+
+  @@index([pageUrl])
+  @@index([signalType])
+  @@index([severity])
+  @@index([detectedAt])
+  @@map("friction_signals")
+}
+
+model TestEvent {
+  id        String    @id @default(uuid()) @db.Uuid
+  testId    String    @map("test_id") @db.Uuid
+  variantId String    @map("variant_id") @db.Uuid
+  visitorId String    @map("visitor_id")
+  sessionId String    @map("session_id")
+  eventType EventType @map("event_type")
+  eventData Json?     @map("event_data")
+  revenue   Float?
+  pageUrl   String?   @map("page_url")
+  device    String?
+  source    String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  test    Test    @relation(fields: [testId], references: [id], onDelete: Cascade)
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@index([variantId])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("test_events")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model GuardrailMetric {
+  id         String              @id @default(uuid()) @db.Uuid
+  testId     String              @map("test_id") @db.Uuid
+  metric     GuardrailMetricType
+  threshold  Float
+  operator   GuardrailOperator
+  customName String?             @map("custom_name")
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@map("guardrail_metrics")
+}
