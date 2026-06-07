@@ -15,6 +15,9 @@ const PUBLIC_PATHS = [
   '/api/snippet/tests',
   '/api/snippet/events',
   '/api/collect',
+  '/api/billing/webhook',
+  '/api/org/invite/peek',
+  '/invite',
 ];
 
 export async function middleware(req: NextRequest) {

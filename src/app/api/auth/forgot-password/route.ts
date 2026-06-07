@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { generateToken } from '@/lib/auth/tokens';
+import { sendPasswordResetEmail } from '@/lib/email';
 
 const Schema = z.object({ email: z.string().email() });
 
@@ -24,10 +25,14 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // TODO: send email with reset link
-    // resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[DEV] Password reset token for ${user.email}: ${resetToken}`);
+    } else {
+      try {
+        await sendPasswordResetEmail(user.email, resetToken);
+      } catch (e) {
+        console.error('Failed to send password reset email:', e);
+      }
     }
   }
 
