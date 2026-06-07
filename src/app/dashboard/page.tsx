@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TestRow from "@/components/dashboard/TestRow";
 import InsightCard from "@/components/dashboard/InsightCard";
@@ -6,19 +8,21 @@ import Link from "next/link";
 import {
   FlaskConical,
   TrendingUp,
-  DollarSign,
-  Clock,
   Plus,
   Brain,
-  BarChart3,
 } from "lucide-react";
 
 export default async function DashboardPage() {
-  // Fetch data
-  const [activeTests, recentResults, frictionSignals, totalTests] =
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const orgId = session.orgId;
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [activeTests, frictionSignals, totalTests, completedCount, recentConversions] =
     await Promise.all([
       prisma.test.findMany({
-        where: { status: "RUNNING" },
+        where: { organizationId: orgId, status: "RUNNING" },
         include: {
           results: { orderBy: { computedAt: "desc" }, take: 1 },
           owner: { select: { name: true } },
@@ -26,30 +30,23 @@ export default async function DashboardPage() {
         orderBy: { startedAt: "desc" },
         take: 10,
       }),
-      prisma.testResult.findMany({
-        where: { test: { status: { in: ["COMPLETED", "SHIPPED"] } } },
-        include: { test: { select: { name: true } }, variant: { select: { name: true, isControl: true } } },
-        orderBy: { computedAt: "desc" },
-        take: 5,
-      }),
       prisma.frictionSignal.findMany({
-        where: { resolvedAt: null },
+        where: { organizationId: orgId, resolvedAt: null },
         orderBy: [{ severity: "desc" }, { detectedAt: "desc" }],
         take: 5,
       }),
-      prisma.test.count(),
+      prisma.test.count({ where: { organizationId: orgId } }),
+      prisma.test.count({
+        where: { organizationId: orgId, status: { in: ["COMPLETED", "SHIPPED"] } },
+      }),
+      prisma.testEvent.count({
+        where: {
+          eventType: "CONVERSION",
+          createdAt: { gte: thirtyDaysAgo },
+          test: { organizationId: orgId },
+        },
+      }),
     ]);
-
-  // Compute summary stats
-  const runningCount = activeTests.length;
-  const completedCount = await prisma.test.count({
-    where: { status: { in: ["COMPLETED", "SHIPPED"] } },
-  });
-
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const recentConversions = await prisma.testEvent.count({
-    where: { eventType: "CONVERSION", createdAt: { gte: thirtyDaysAgo } },
-  });
 
   const avgDuration =
     activeTests.length > 0
@@ -61,7 +58,6 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -85,11 +81,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatsCard
           title="Active Tests"
-          value={runningCount.toString()}
+          value={activeTests.length.toString()}
           icon="flask"
           subtitle={`${totalTests} total`}
         />
@@ -114,16 +109,12 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Tests Table */}
         <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200">
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
               <FlaskConical size={18} /> Active Tests
             </h2>
-            <Link
-              href="/tests?status=RUNNING"
-              className="text-sm text-blue-600 hover:underline"
-            >
+            <Link href="/tests?status=RUNNING" className="text-sm text-blue-600 hover:underline">
               View all
             </Link>
           </div>
@@ -153,7 +144,7 @@ export default async function DashboardPage() {
                       probability={latestResult?.bayesianProbability ?? undefined}
                       revenueLift={latestResult?.liftPercent ?? undefined}
                       startedAt={test.startedAt?.toISOString() ?? null}
-                      targetUrl={test.targetUrl}
+                      targetUrl={test.targetUrl ?? undefined}
                     />
                   );
                 })}
@@ -163,26 +154,19 @@ export default async function DashboardPage() {
             <div className="p-8 text-center">
               <FlaskConical size={32} className="mx-auto text-gray-300 mb-3" />
               <p className="text-sm text-gray-500 mb-3">No active tests yet</p>
-              <Link
-                href="/tests/new"
-                className="text-sm text-blue-600 hover:underline"
-              >
+              <Link href="/tests/new" className="text-sm text-blue-600 hover:underline">
                 Create your first test
               </Link>
             </div>
           )}
         </div>
 
-        {/* AI Insights Sidebar */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
               <TrendingUp size={18} /> AI Insights
             </h2>
-            <Link
-              href="/insights"
-              className="text-sm text-blue-600 hover:underline"
-            >
+            <Link href="/insights" className="text-sm text-blue-600 hover:underline">
               View all
             </Link>
           </div>
@@ -203,11 +187,9 @@ export default async function DashboardPage() {
             ) : (
               <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
                 <Brain size={32} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 mb-3">
-                  No friction signals detected yet
-                </p>
+                <p className="text-sm text-gray-500 mb-3">No friction signals detected yet</p>
                 <p className="text-xs text-gray-400">
-                  Connect your integrations and run an analysis to get started
+                  Connect integrations and run an analysis to get started
                 </p>
               </div>
             )}

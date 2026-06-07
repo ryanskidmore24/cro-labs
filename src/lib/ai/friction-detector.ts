@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { IntegrationType, Severity, SignalType } from "@prisma/client";
 import {
   getIntegrationClient,
@@ -73,8 +73,8 @@ export async function detectFrictionSignals(
   const dateRange = defaultDateRange();
   const signals: FrictionSignalDetected[] = [];
 
-  // Fetch the store owner to load integrations
-  const store = await prisma.user.findUnique({
+  // Fetch the org to load integrations (storeId is orgId)
+  const store = await prisma.organization.findUnique({
     where: { id: storeId },
     include: {
       integrations: { where: { enabled: true } },
@@ -82,7 +82,7 @@ export async function detectFrictionSignals(
   });
 
   if (!store) {
-    throw new Error(`Store/user not found: ${storeId}`);
+    throw new Error(`Organization not found: ${storeId}`);
   }
 
   // ── GA4 Analysis ──────────────────────────────────────────────────────

@@ -25,7 +25,7 @@ interface TestRowProps {
   probability?: number;
   revenueLift?: number;
   startedAt?: string | null;
-  targetUrl: string;
+  targetUrl?: string;
 }
 
 export default function TestRow({

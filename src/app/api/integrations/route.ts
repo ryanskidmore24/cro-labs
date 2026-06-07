@@ -1,62 +1,61 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
-// GET: List all integrations for the current user
-export async function GET() {
-  // TODO: get actual userId from session
+export async function GET(req: NextRequest) {
+  const session = await getSessionFromRequest(req);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const integrations = await prisma.integration.findMany({
+    where: { organizationId: session.orgId },
     orderBy: { type: "asc" },
   });
 
   return NextResponse.json({
     integrations: integrations.map((i) => ({
       ...i,
-      accessToken: undefined, // Never expose tokens
+      accessToken: undefined,
       refreshToken: undefined,
     })),
   });
 }
 
-// POST: Create/update an integration (used for API-key-based ones like Clarity)
 export async function POST(req: NextRequest) {
+  const session = await getSessionFromRequest(req);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const { type, metadata } = body;
 
-  // TODO: get actual userId from session
-  const userId = body.userId || undefined;
+  const existing = await prisma.integration.findFirst({
+    where: { organizationId: session.orgId, type },
+  });
 
   const integration = await prisma.integration.upsert({
-    where: {
-      // Use a unique compound — for now just find first of this type
-      id: (
-        await prisma.integration.findFirst({ where: { type } })
-      )?.id || "00000000-0000-0000-0000-000000000000",
-    },
-    update: {
-      metadata,
-      enabled: true,
-      updatedAt: new Date(),
-    },
+    where: { id: existing?.id ?? "00000000-0000-0000-0000-000000000000" },
+    update: { metadata, enabled: true, updatedAt: new Date() },
     create: {
+      organizationId: session.orgId,
       type,
-      accessToken: metadata.apiKey || "",
+      accessToken: metadata?.apiKey || "",
       metadata,
       enabled: true,
-      ...(userId ? { userId } : {}),
     },
   });
 
   return NextResponse.json({ integration: { ...integration, accessToken: undefined } });
 }
 
-// DELETE: Disconnect an integration
 export async function DELETE(req: NextRequest) {
+  const session = await getSessionFromRequest(req);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
   if (!type) return NextResponse.json({ error: "Missing type" }, { status: 400 });
 
   await prisma.integration.updateMany({
-    where: { type: type as any },
+    where: { organizationId: session.orgId, type: type as any },
     data: { enabled: false },
   });
 

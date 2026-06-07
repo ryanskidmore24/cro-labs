@@ -68,7 +68,7 @@ export {
 
 // ─── Integration Client Helper ─────────────────────────────────────────────
 
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { IntegrationType } from "@prisma/client";
 import { refreshGoogleToken } from "./google-auth";
 
@@ -178,15 +178,15 @@ export type IntegrationClient =
  */
 export async function getIntegrationClient(
   type: IntegrationType,
-  userId: string
+  orgId: string
 ): Promise<IntegrationClient> {
   const integration = await prisma.integration.findFirst({
-    where: { userId, type, enabled: true },
+    where: { organizationId: orgId, type, enabled: true },
   });
 
   if (!integration) {
     throw new Error(
-      `No ${type} integration found for user ${userId}. Please connect the integration first.`
+      `No ${type} integration found for org ${orgId}. Please connect the integration first.`
     );
   }
 

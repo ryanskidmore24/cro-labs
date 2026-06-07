@@ -114,7 +114,8 @@ export async function getFunnelData(
   for (let i = 0; i < funnelSteps.length; i++) {
     const step = funnelSteps[i];
 
-    const res = await client.properties.runReport({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
       property: `properties/${propertyId}`,
       requestBody: {
         dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],
@@ -171,7 +172,8 @@ export async function getPageMetrics(
     ...(dimensions ?? []).map((d) => ({ name: d })),
   ];
 
-  const res = await client.properties.runReport({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
     property: `properties/${propertyId}`,
     requestBody: {
       dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],
@@ -216,7 +218,8 @@ export async function getUserFlowData(
 ): Promise<UserFlowPath[]> {
   const client = getAnalyticsDataClient(accessToken);
 
-  const res = await client.properties.runReport({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
     property: `properties/${propertyId}`,
     requestBody: {
       dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],
@@ -252,7 +255,8 @@ export async function getTrafficSources(
 ): Promise<TrafficSource[]> {
   const client = getAnalyticsDataClient(accessToken);
 
-  const res = await client.properties.runReport({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
     property: `properties/${propertyId}`,
     requestBody: {
       dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],
@@ -293,7 +297,8 @@ export async function getDeviceBreakdown(
 ): Promise<DeviceMetric[]> {
   const client = getAnalyticsDataClient(accessToken);
 
-  const res = await client.properties.runReport({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
     property: `properties/${propertyId}`,
     requestBody: {
       dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],
@@ -335,7 +340,8 @@ export async function getConversionEvents(
 ): Promise<ConversionEvent[]> {
   const client = getAnalyticsDataClient(accessToken);
 
-  const res = await client.properties.runReport({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await (client.properties as any).runReport({
     property: `properties/${propertyId}`,
     requestBody: {
       dateRanges: [{ startDate: dateRange.startDate, endDate: dateRange.endDate }],

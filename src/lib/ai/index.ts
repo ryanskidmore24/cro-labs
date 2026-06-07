@@ -91,7 +91,7 @@ export type {
 // ─── CRO Engine ─────────────────────────────────────────────────────────────
 
 import { IntegrationType } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import {
   getIntegrationClient,
   type GA4Client,
@@ -155,14 +155,14 @@ export class CROEngine {
   async runFullAnalysis(storeId: string): Promise<FullAnalysisResult> {
     const dateRange = this.defaultDateRange();
 
-    // Step 1: Gather store context and integrations
-    const store = await prisma.user.findUnique({
+    // Step 1: Gather store context and integrations (storeId is orgId)
+    const store = await prisma.organization.findUnique({
       where: { id: storeId },
       include: { integrations: { where: { enabled: true } } },
     });
 
     if (!store) {
-      throw new Error(`Store/user not found: ${storeId}`);
+      throw new Error(`Organization not found: ${storeId}`);
     }
 
     const storeMetrics = await this.buildStoreMetrics(storeId, dateRange);
@@ -261,13 +261,13 @@ export class CROEngine {
     storeId: string
   ): Promise<VariantChanges> {
     // Fetch brand context
-    const store = await prisma.user.findUnique({
+    const store = await prisma.organization.findUnique({
       where: { id: storeId },
       include: { integrations: { where: { enabled: true } } },
     });
 
     if (!store) {
-      throw new Error(`Store/user not found: ${storeId}`);
+      throw new Error(`Organization not found: ${storeId}`);
     }
 
     const shopifyIntegration = store.integrations.find(
@@ -361,7 +361,7 @@ export class CROEngine {
     };
 
     try {
-      const store = await prisma.user.findUnique({
+      const store = await prisma.organization.findUnique({
         where: { id: storeId },
         include: { integrations: { where: { enabled: true } } },
       });
@@ -446,7 +446,7 @@ export class CROEngine {
       storeId
     )) as GA4Client;
 
-    const store = await prisma.user.findUnique({
+    const store = await prisma.organization.findUnique({
       where: { id: storeId },
       include: { integrations: { where: { enabled: true } } },
     });
@@ -496,7 +496,7 @@ export class CROEngine {
       storeId
     )) as SearchConsoleClient;
 
-    const store = await prisma.user.findUnique({
+    const store = await prisma.organization.findUnique({
       where: { id: storeId },
       include: { integrations: { where: { enabled: true } } },
     });

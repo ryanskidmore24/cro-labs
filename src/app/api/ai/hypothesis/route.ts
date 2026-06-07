@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth/session";
 import { generateHypotheses } from "@/lib/ai/claude-client";
 
 export async function POST(req: NextRequest) {
+  const session = await getSessionFromRequest(req);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const { signalId } = await req.json();
 
     const signal = await prisma.frictionSignal.findUnique({
-      where: { id: signalId },
+      where: { id: signalId, organizationId: session.orgId },
     });
 
     if (!signal) {
@@ -15,20 +19,17 @@ export async function POST(req: NextRequest) {
     }
 
     const hypotheses = await generateHypotheses({
+      storeId: session.orgId,
       pageUrl: signal.pageUrl,
-      signalType: signal.signalType,
-      severity: signal.severity,
-      metric: signal.metric,
-      baseline: signal.baseline,
-      metadata: signal.metadata as Record<string, any>,
+      pageType: "other",
     });
 
-    // Store hypotheses in DB
     const created = await Promise.all(
-      hypotheses.map((h) =>
+      hypotheses.map((h: any) =>
         prisma.hypothesis.create({
           data: {
-            frictionSignal: h.suggestedChange,
+            organizationId: session.orgId,
+            frictionSignal: h.frictionSignal || signal.signalType,
             suggestedChange: h.suggestedChange,
             predictedKpi: h.predictedKpi || "CVR",
             predictedLift: h.predictedLift,
@@ -38,8 +39,8 @@ export async function POST(req: NextRequest) {
             evidenceData: { signalId, ...h.evidenceData },
             status: "SUGGESTED",
           },
-        })
-      )
+        }),
+      ),
     );
 
     return NextResponse.json({

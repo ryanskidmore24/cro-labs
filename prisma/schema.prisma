@@ -17,6 +17,20 @@ enum UserRole {
   REVIEWER
 }
 
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum OrgPlan {
+  FREE
+  PRO
+  TEAM
+  ENTERPRISE
+}
+
 enum IntegrationType {
   GA4
   SEARCH_CONSOLE
@@ -108,70 +122,114 @@ enum GuardrailOperator {
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
-model User {
+model Organization {
   id        String   @id @default(uuid()) @db.Uuid
-  email     String   @unique
-  name      String?
-  role      UserRole @default(VIEWER)
-  avatar    String?
+  name      String
+  slug      String   @unique
+  publicKey String   @unique @map("public_key")
+  plan      OrgPlan  @default(FREE)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  integrations Integration[]
+  members      OrganizationMember[]
   tests        Test[]
+  integrations Integration[]
+  frictionSignals FrictionSignal[]
   auditLogs    AuditLog[]
+  hypotheses   Hypothesis[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model User {
+  id                        String    @id @default(uuid()) @db.Uuid
+  email                     String    @unique
+  name                      String?
+  role                      UserRole  @default(VIEWER)
+  avatar                    String?
+  passwordHash              String?   @map("password_hash")
+  emailVerified             Boolean   @default(false) @map("email_verified")
+  verificationToken         String?   @unique @map("verification_token")
+  verificationTokenExpiresAt DateTime? @map("verification_token_expires_at")
+  resetToken                String?   @unique @map("reset_token")
+  resetTokenExpiresAt       DateTime? @map("reset_token_expires_at")
+  googleId                  String?   @unique @map("google_id")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  memberships OrganizationMember[]
+  tests       Test[]
+  auditLogs   AuditLog[]
 
   @@map("users")
 }
 
 model Integration {
-  id           String          @id @default(uuid()) @db.Uuid
-  userId       String          @map("user_id") @db.Uuid
-  type         IntegrationType
-  accessToken  String          @map("access_token")
-  refreshToken String?         @map("refresh_token")
-  expiresAt    DateTime?       @map("expires_at")
-  metadata     Json?
-  enabled      Boolean         @default(true)
-  createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  type           IntegrationType
+  accessToken    String          @map("access_token")
+  refreshToken   String?         @map("refresh_token")
+  expiresAt      DateTime?       @map("expires_at")
+  metadata       Json?
+  enabled        Boolean         @default(true)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([organizationId])
   @@index([type])
   @@map("integrations")
 }
 
 model Test {
-  id                   String         @id @default(uuid()) @db.Uuid
+  id                   String          @id @default(uuid()) @db.Uuid
+  organizationId       String          @map("organization_id") @db.Uuid
   name                 String
   description          String?
   hypothesis           String?
-  status               TestStatus     @default(DRAFT)
-  primaryKpi           PrimaryKpi     @map("primary_kpi")
-  targetUrl            String?        @map("target_url")
-  deviceTarget         DeviceTarget   @default(ALL) @map("device_target")
-  trafficPercent       Int            @default(100) @map("traffic_percent")
-  trafficSplit         Json?          @map("traffic_split")
-  audienceFilters      Json?          @map("audience_filters")
-  projectedRevenueLift Float?         @map("projected_revenue_lift")
+  status               TestStatus      @default(DRAFT)
+  primaryKpi           PrimaryKpi      @map("primary_kpi")
+  targetUrl            String?         @map("target_url")
+  deviceTarget         DeviceTarget    @default(ALL) @map("device_target")
+  trafficPercent       Int             @default(100) @map("traffic_percent")
+  trafficSplit         Json?           @map("traffic_split")
+  audienceFilters      Json?           @map("audience_filters")
+  projectedRevenueLift Float?          @map("projected_revenue_lift")
   effortEstimate       EffortEstimate? @map("effort_estimate")
-  priority             Int            @default(0)
-  ownerId              String         @map("owner_id") @db.Uuid
-  createdAt            DateTime       @default(now()) @map("created_at")
-  updatedAt            DateTime       @updatedAt @map("updated_at")
-  startedAt            DateTime?      @map("started_at")
-  endedAt              DateTime?      @map("ended_at")
+  priority             Int             @default(0)
+  ownerId              String          @map("owner_id") @db.Uuid
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+  startedAt            DateTime?       @map("started_at")
+  endedAt              DateTime?       @map("ended_at")
 
-  owner           User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  variants        Variant[]
-  results         TestResult[]
-  hypotheses      Hypothesis[]
-  events          TestEvent[]
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner            User?             @relation(fields: [ownerId], references: [id])
+  variants         Variant[]
+  results          TestResult[]
+  hypotheses       Hypothesis[]
+  events           TestEvent[]
   guardrailMetrics GuardrailMetric[]
 
-  @@index([ownerId])
+  @@index([organizationId])
   @@index([status])
   @@index([primaryKpi])
   @@index([createdAt])
@@ -225,6 +283,7 @@ model TestResult {
 
 model Hypothesis {
   id              String           @id @default(uuid()) @db.Uuid
+  organizationId  String?          @map("organization_id") @db.Uuid
   testId          String?          @map("test_id") @db.Uuid
   frictionSignal  String?          @map("friction_signal")
   suggestedChange String?          @map("suggested_change")
@@ -237,8 +296,10 @@ model Hypothesis {
   status          HypothesisStatus @default(SUGGESTED)
   createdAt       DateTime         @default(now()) @map("created_at")
 
-  test Test? @relation(fields: [testId], references: [id], onDelete: SetNull)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  test         Test?         @relation(fields: [testId], references: [id], onDelete: SetNull)
 
+  @@index([organizationId])
   @@index([testId])
   @@index([status])
   @@index([aiModel])
@@ -246,16 +307,20 @@ model Hypothesis {
 }
 
 model FrictionSignal {
-  id         String     @id @default(uuid()) @db.Uuid
-  pageUrl    String     @map("page_url")
-  signalType SignalType @map("signal_type")
-  severity   Severity
-  metric     Float
-  baseline   Float
-  detectedAt DateTime   @default(now()) @map("detected_at")
-  resolvedAt DateTime?  @map("resolved_at")
-  metadata   Json?
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String?    @map("organization_id") @db.Uuid
+  pageUrl        String     @map("page_url")
+  signalType     SignalType @map("signal_type")
+  severity       Severity
+  metric         Float
+  baseline       Float
+  detectedAt     DateTime   @default(now()) @map("detected_at")
+  resolvedAt     DateTime?  @map("resolved_at")
+  metadata       Json?
 
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@index([pageUrl])
   @@index([signalType])
   @@index([severity])
@@ -290,16 +355,19 @@ model TestEvent {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  action     String
-  entityType String   @map("entity_type")
-  entityId   String   @map("entity_id")
-  details    Json?
-  createdAt  DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  details        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([organizationId])
   @@index([userId])
   @@index([entityType, entityId])
   @@index([createdAt])

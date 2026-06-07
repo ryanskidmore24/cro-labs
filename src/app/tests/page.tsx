@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 import TestRow from "@/components/dashboard/TestRow";
 import Link from "next/link";
 import { Plus, Filter } from "lucide-react";
@@ -8,11 +10,17 @@ interface Props {
 }
 
 export default async function TestsPage({ searchParams }: Props) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
   const params = await searchParams;
   const statusFilter = params.status;
 
   const tests = await prisma.test.findMany({
-    where: statusFilter ? { status: statusFilter as any } : undefined,
+    where: {
+      organizationId: session.orgId,
+      ...(statusFilter ? { status: statusFilter as any } : {}),
+    },
     include: {
       results: { orderBy: { computedAt: "desc" }, take: 1 },
       owner: { select: { name: true } },
@@ -88,7 +96,7 @@ export default async function TestsPage({ searchParams }: Props) {
                     probability={r?.bayesianProbability ?? undefined}
                     revenueLift={r?.liftPercent ?? undefined}
                     startedAt={test.startedAt?.toISOString() ?? null}
-                    targetUrl={test.targetUrl}
+                    targetUrl={test.targetUrl ?? undefined}
                   />
                 );
               })}
