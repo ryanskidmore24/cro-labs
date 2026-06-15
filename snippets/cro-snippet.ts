@@ -9,7 +9,7 @@
  *   5. Automatic event tracking (impressions, clicks, scrolls, conversions)
  *
  * Install via a single script tag:
- *   <script src="https://your-api.com/snippet.js" data-api="https://your-api.com" data-store-id="store_xxx" async></script>
+ *   <script src="https://your-domain.com/snippet.js" data-key="pk_xxxxxxxxxxxx" async></script>
  *
  * No external dependencies. Target: < 15KB minified+gzipped.
  */
@@ -20,7 +20,7 @@
 
 interface CROConfig {
   apiUrl: string;
-  storeId: string;
+  orgKey: string;
 }
 
 interface DOMChange {
@@ -50,7 +50,7 @@ interface Test {
   variants: Variant[];
 }
 
-interface TrackEvent {
+interface CROTrackEvent {
   testId: string;
   variantId: string;
   visitorId: string;
@@ -334,12 +334,12 @@ interface VariantAssignment {
   // Event tracking
   // -----------------------------------------------------------------------
 
-  let eventQueue: TrackEvent[] = [];
+  let eventQueue: CROTrackEvent[] = [];
   let flushTimer: ReturnType<typeof setTimeout> | null = null;
   const FLUSH_INTERVAL = 2000;
   const MAX_BATCH_SIZE = 50;
 
-  function queueEvent(event: Omit<TrackEvent, 'visitorId' | 'sessionId' | 'device' | 'pageUrl' | 'timestamp'>): void {
+  function queueEvent(event: Omit<CROTrackEvent, 'visitorId' | 'sessionId' | 'device' | 'pageUrl' | 'timestamp'>): void {
     eventQueue.push({
       ...event,
       visitorId: visitorId!,
@@ -362,12 +362,12 @@ interface VariantAssignment {
       flushTimer = null;
     }
 
-    if (eventQueue.length === 0) return;
+    if (!config || eventQueue.length === 0) return;
 
     const batch = eventQueue.splice(0, MAX_BATCH_SIZE);
     const payload = JSON.stringify({
       events: batch,
-      storeId: config.storeId,
+      key: config.orgKey,
     });
 
     // Use sendBeacon for reliability (works during page unload)
@@ -376,15 +376,15 @@ interface VariantAssignment {
       const sent = navigator.sendBeacon(config.apiUrl + '/api/snippet/events', blob);
       if (!sent) {
         // Fallback to fetch
-        fetchEvents(payload);
+        fetchEvents(payload, config.apiUrl);
       }
     } else {
-      fetchEvents(payload);
+      fetchEvents(payload, config.apiUrl);
     }
   }
 
-  function fetchEvents(payload: string): void {
-    fetch(config.apiUrl + '/api/snippet/events', {
+  function fetchEvents(payload: string, apiUrl: string): void {
+    fetch(apiUrl + '/api/snippet/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
@@ -559,21 +559,21 @@ interface VariantAssignment {
   function readConfig(): CROConfig | null {
     // Check window.__CRO_CONFIG first
     const winConfig = (window as any).__CRO_CONFIG;
-    if (winConfig && winConfig.apiUrl && winConfig.storeId) {
-      return { apiUrl: winConfig.apiUrl, storeId: winConfig.storeId };
+    if (winConfig && winConfig.apiUrl && winConfig.orgKey) {
+      return { apiUrl: winConfig.apiUrl, orgKey: winConfig.orgKey };
     }
 
-    // Fall back to reading from the current script tag
-    const scripts = document.querySelectorAll('script[data-api][data-store-id]');
+    // Read from script tag: <script src="..." data-key="pk_xxx" data-api="https://...">
+    // data-api is optional — defaults to the script src origin
+    const scripts = document.querySelectorAll<HTMLScriptElement>('script[data-key]');
     for (let i = 0; i < scripts.length; i++) {
-      const script = scripts[i] as HTMLScriptElement;
-      const apiUrl = script.getAttribute('data-api');
-      const storeId = script.getAttribute('data-store-id');
-      if (apiUrl && storeId) {
-        // Also set on window for any other code that needs it
-        (window as any).__CRO_CONFIG = { apiUrl, storeId };
-        return { apiUrl, storeId };
-      }
+      const script = scripts[i];
+      const orgKey = script.getAttribute('data-key');
+      if (!orgKey) continue;
+      const dataApi = script.getAttribute('data-api');
+      const apiUrl = dataApi || (script.src ? new URL(script.src).origin : location.origin);
+      (window as any).__CRO_CONFIG = { apiUrl, orgKey };
+      return { apiUrl, orgKey };
     }
 
     return null;
@@ -636,6 +636,7 @@ interface VariantAssignment {
   // -----------------------------------------------------------------------
 
   async function init(): Promise<void> {
+    if (!config) return;
     try {
       // Fetch tests (from cache or API)
       let tests = getCachedTests();
@@ -643,7 +644,7 @@ interface VariantAssignment {
         const url =
           config.apiUrl +
           '/api/snippet/tests?' +
-          'storeId=' + encodeURIComponent(config.storeId) +
+          'key=' + encodeURIComponent(config.orgKey) +
           '&url=' + encodeURIComponent(location.href) +
           '&device=' + encodeURIComponent(device);
 

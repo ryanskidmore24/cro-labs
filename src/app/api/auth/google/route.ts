@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGoogleAuthUrl, type GoogleScopeKey } from "@/lib/integrations/google-auth";
+import { getSessionFromRequest } from "@/lib/auth/session";
 
 /**
- * GET /api/auth/google?scope=ga4|search-console|both&userId=<uuid>
+ * GET /api/auth/google?scope=ga4|search-console|both
  *
- * Redirects the user to Google's OAuth consent screen with the
- * appropriate scopes for the requested integration.
+ * Redirects to Google's OAuth consent screen. orgId is taken from the
+ * authenticated session rather than a query parameter.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams } = request.nextUrl;
-  const scope = searchParams.get("scope") ?? "both";
-  const userId = searchParams.get("userId");
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "userId query parameter is required" },
-      { status: 400 }
-    );
+  const session = await getSessionFromRequest(request);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let scopeKeys: GoogleScopeKey[];
+  const { searchParams } = request.nextUrl;
+  const scope = searchParams.get("scope") ?? "both";
 
+  let scopeKeys: GoogleScopeKey[];
   switch (scope) {
     case "ga4":
       scopeKeys = ["GA4"];
@@ -32,13 +29,10 @@ export async function GET(request: NextRequest) {
       scopeKeys = ["GA4", "SEARCH_CONSOLE"];
       break;
     default:
-      return NextResponse.json(
-        { error: "Invalid scope. Must be ga4, search-console, or both." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid scope." }, { status: 400 });
   }
 
-  const state = JSON.stringify({ userId, scope });
+  const state = JSON.stringify({ orgId: session.orgId, scope });
   const authUrl = getGoogleAuthUrl(scopeKeys, state);
 
   return NextResponse.redirect(authUrl);

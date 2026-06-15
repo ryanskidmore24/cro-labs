@@ -1,5 +1,159 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { FlaskConical, Zap, BarChart3, Users, Code2, ArrowRight, Star } from "lucide-react";
 
-export default function Home() {
-  redirect("/dashboard");
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <nav className="border-b border-gray-100 sticky top-0 bg-white/90 backdrop-blur-sm z-50">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <FlaskConical size={18} className="text-white" />
+            </div>
+            <span className="font-bold text-gray-900 text-lg">CRO Lab</span>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
+            <Link href="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
+            <a href="#features" className="hover:text-gray-900 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</a>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              Get started free
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
+        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
+          <Zap size={12} />
+          AI-powered A/B testing for Shopify &amp; beyond
+        </div>
+        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
+          Stop guessing.<br />
+          <span className="text-blue-600">Start optimizing.</span>
+        </h1>
+        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
+          CRO Lab detects friction in your funnel, generates AI-powered hypotheses, and runs A/B tests — all from a single snippet on your site.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/signup"
+            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+          >
+            Start for free <ArrowRight size={18} />
+          </Link>
+          <Link
+            href="/pricing"
+            className="flex items-center justify-center gap-2 px-8 py-3.5 border border-gray-200 text-gray-700 rounded-xl text-base font-semibold hover:bg-gray-50 transition-colors"
+          >
+            See pricing
+          </Link>
+        </div>
+        <p className="text-sm text-gray-400 mt-4">No credit card required · Free plan forever</p>
+      </section>
+
+      {/* Snippet showcase */}
+      <section className="max-w-3xl mx-auto px-6 pb-24">
+        <div className="bg-gray-900 rounded-2xl p-6 shadow-2xl">
+          <div className="flex gap-1.5 mb-4">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+          </div>
+          <pre className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">{`<head>
+  <!-- Add to every page of your site -->
+  <script
+    src="https://crolab.app/snippet.js"
+    data-key="pk_xxxxxxxxxxxxxxxxxxxx"
+    async
+  ></script>
+</head>`}</pre>
+          <p className="text-xs text-gray-500 mt-4">That&apos;s it. CRO Lab handles the rest.</p>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="bg-gray-50 py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
+            Everything you need to grow conversions
+          </h2>
+          <p className="text-gray-500 text-center mb-16 max-w-xl mx-auto">
+            From detecting friction to shipping winning variants — CRO Lab automates the hard parts of optimization.
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { icon: <BarChart3 size={24} className="text-blue-600" />, title: "AI Friction Detection", desc: "Automatically identifies high bounce rates, rage clicks, funnel drop-offs, and low CTR pages using your connected analytics." },
+              { icon: <Zap size={24} className="text-purple-600" />, title: "Hypothesis Generation", desc: "Claude AI generates prioritized test hypotheses with projected revenue impact based on your store's real data." },
+              { icon: <Code2 size={24} className="text-green-600" />, title: "Visual A/B Testing", desc: "Build variants with a no-code editor. The snippet handles variant assignment, DOM changes, and event tracking automatically." },
+              { icon: <FlaskConical size={24} className="text-orange-600" />, title: "Bayesian Statistics", desc: "Know when to call a test with Bayesian probability and credible intervals — no more waiting for arbitrary sample sizes." },
+              { icon: <Users size={24} className="text-pink-600" />, title: "Team Collaboration", desc: "Invite your CRO team, assign roles, and manage your experimentation backlog together in one place." },
+              { icon: <Star size={24} className="text-yellow-600" />, title: "Multi-platform Insights", desc: "Connect GA4, Search Console, Microsoft Clarity, and Shopify for a unified view of what's hurting conversions." },
+            ].map((f) => (
+              <div key={f.title} className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+                <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center mb-4">{f.icon}</div>
+                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="py-24 max-w-6xl mx-auto px-6">
+        <h2 className="text-3xl font-bold text-gray-900 text-center mb-16">How it works</h2>
+        <div className="grid md:grid-cols-4 gap-8">
+          {[
+            { step: "1", title: "Install snippet", desc: "Paste one script tag in your site's <head>. Works on Shopify, HTML, Next.js, and more." },
+            { step: "2", title: "Connect analytics", desc: "Link GA4, Clarity, Search Console, and Shopify in minutes via OAuth." },
+            { step: "3", title: "Get AI insights", desc: "CRO Lab finds friction and suggests tests ranked by projected revenue impact." },
+            { step: "4", title: "Ship winners", desc: "Launch tests, watch Bayesian stats update in real time, and ship the winning variant." },
+          ].map((s) => (
+            <div key={s.step} className="text-center">
+              <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4">{s.step}</div>
+              <h3 className="font-semibold text-gray-900 mb-2">{s.title}</h3>
+              <p className="text-sm text-gray-500">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-blue-600 py-20">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to optimize?</h2>
+          <p className="text-blue-100 mb-8">Join teams running smarter A/B tests with AI.</p>
+          <Link href="/signup" className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-blue-600 rounded-xl text-base font-semibold hover:bg-blue-50 transition-colors">
+            Get started free <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-100 py-10">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-gray-600">
+            <FlaskConical size={16} />
+            <span className="text-sm font-medium">CRO Lab</span>
+          </div>
+          <div className="flex gap-6 text-sm text-gray-400">
+            <Link href="/pricing" className="hover:text-gray-600 transition-colors">Pricing</Link>
+            <a href="mailto:hello@crolab.app" className="hover:text-gray-600 transition-colors">Contact</a>
+            <Link href="/login" className="hover:text-gray-600 transition-colors">Sign in</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
