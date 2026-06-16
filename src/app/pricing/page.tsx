@@ -33,7 +33,7 @@ const PLANS = [
     description: "For large organizations",
     features: ["Unlimited everything", "Unlimited seats", "Custom SLA", "SSO / SAML", "Dedicated success manager", "On-premise option", "Custom contracts"],
     cta: "Contact us",
-    href: "mailto:hello@crolab.app",
+    href: "mailto:hello@conversionpath.com",
   },
 ];
 
@@ -47,7 +47,7 @@ export default function PricingPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <FlaskConical size={18} className="text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-lg">CRO Lab</span>
+            <span className="font-bold text-gray-900 text-lg">Conversion Path</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Sign in</Link>
@@ -123,7 +123,7 @@ export default function PricingPage() {
               { q: "Can I switch plans later?", a: "Yes. You can upgrade or downgrade at any time. Upgrades take effect immediately; downgrades at the end of your billing period." },
               { q: "What happens to my data if I downgrade?", a: "Your data is always safe. If you exceed the free plan limits, you won't lose tests — you just won't be able to create new ones until you upgrade or archive existing ones." },
               { q: "Do you offer a trial?", a: "Yes — sign up for free and use the Free plan indefinitely. Paid plans include a 14-day trial when you first upgrade." },
-              { q: "Is the snippet GDPR compliant?", a: "The snippet uses first-party cookies only and doesn't send data to third parties. You control all data stored in your CRO Lab account." },
+              { q: "Is the snippet GDPR compliant?", a: "The snippet uses first-party cookies only and doesn't send data to third parties. You control all data stored in your Conversion Path account." },
               { q: "Does it work on Shopify?", a: "Yes. Paste the snippet in your theme.liquid file and it works across all Shopify storefronts. Shopify Plus and custom themes are fully supported." },
             ].map((faq) => (
               <div key={faq.q} className="bg-white rounded-xl border border-gray-100 p-5">
@@ -140,11 +140,11 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-gray-600">
             <FlaskConical size={16} />
-            <span className="text-sm font-medium">CRO Lab</span>
+            <span className="text-sm font-medium">Conversion Path</span>
           </div>
           <div className="flex gap-6 text-sm text-gray-400">
             <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
-            <a href="mailto:hello@crolab.app" className="hover:text-gray-600 transition-colors">Contact</a>
+            <a href="mailto:hello@conversionpath.com" className="hover:text-gray-600 transition-colors">Contact</a>
             <Link href="/login" className="hover:text-gray-600 transition-colors">Sign in</Link>
           </div>
         </div>

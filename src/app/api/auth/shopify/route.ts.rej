@@ -1,0 +1,62 @@
+diff a/src/app/api/auth/shopify/route.ts b/src/app/api/auth/shopify/route.ts	(rejected hunks)
+@@ -1,50 +1,35 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import crypto from "crypto";
++import { getSessionFromRequest } from "@/lib/auth/session";
+ 
+-const SHOPIFY_SCOPES = [
+-  "read_orders",
+-  "read_products",
+-  "read_customers",
+-].join(",");
++const SHOPIFY_SCOPES = ["read_orders", "read_products", "read_customers"].join(",");
+ 
+ /**
+- * GET /api/auth/shopify?shop=<mystore.myshopify.com>&userId=<uuid>
++ * GET /api/auth/shopify?shop=<mystore.myshopify.com>
+  *
+- * Redirects the user to Shopify's OAuth install/authorize URL.
++ * Redirects to Shopify's OAuth authorize URL. orgId is taken from session.
+  */
+ export async function GET(request: NextRequest) {
++  const session = await getSessionFromRequest(request);
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
+   const { searchParams } = request.nextUrl;
+   const shop = searchParams.get("shop");
+-  const userId = searchParams.get("userId");
+ 
+   if (!shop) {
+-    return NextResponse.json(
+-      { error: "shop query parameter is required (e.g. mystore.myshopify.com)" },
+-      { status: 400 }
+-    );
+-  }
+-
+-  if (!userId) {
+-    return NextResponse.json(
+-      { error: "userId query parameter is required" },
+-      { status: 400 }
+-    );
++    return NextResponse.json({ error: "shop query parameter is required" }, { status: 400 });
+   }
+ 
+   const apiKey = process.env.SHOPIFY_API_KEY;
+   if (!apiKey) {
+-    return NextResponse.json(
+-      { error: "SHOPIFY_API_KEY is not configured" },
+-      { status: 500 }
+-    );
++    return NextResponse.json({ error: "SHOPIFY_API_KEY is not configured" }, { status: 500 });
+   }
+ 
+   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+   const redirectUri = `${appUrl}/api/auth/shopify/callback`;
+ 
+-  // Generate a nonce for CSRF protection
+   const nonce = crypto.randomBytes(16).toString("hex");
+-  const state = JSON.stringify({ userId, nonce });
++  const state = JSON.stringify({ orgId: session.orgId, nonce });
+ 
+   const installUrl = new URL(`https://${shop}/admin/oauth/authorize`);
+   installUrl.searchParams.set("client_id", apiKey);

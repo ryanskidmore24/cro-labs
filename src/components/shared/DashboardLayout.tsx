@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="flex items-center justify-between h-14 px-4 border-b border-gray-800">
           {!collapsed && (
-            <span className="text-lg font-semibold tracking-tight">CRO Lab</span>
+            <span className="text-lg font-semibold tracking-tight">Conversion Path</span>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}

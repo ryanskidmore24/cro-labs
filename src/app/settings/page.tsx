@@ -9,7 +9,7 @@ export default function SettingsPage() {
 
   const storeId = "your-store-id"; // Would come from user context
 
-  const snippetCode = `<!-- CRO Lab - Paste before </head> -->
+  const snippetCode = `<!-- Conversion Path - Paste before </head> -->
 <script
   src="https://your-app-domain.com/snippet.js"
   data-api="https://your-app-domain.com"

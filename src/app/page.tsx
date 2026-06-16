@@ -11,7 +11,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <FlaskConical size={18} className="text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-lg">CRO Lab</span>
+            <span className="font-bold text-gray-900 text-lg">Conversion Path</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600">
             <Link href="/pricing" className="hover:text-gray-900 transition-colors">Pricing</Link>
@@ -43,7 +43,7 @@ export default function LandingPage() {
           <span className="text-blue-600">Start optimizing.</span>
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          CRO Lab detects friction in your funnel, generates AI-powered hypotheses, and runs A/B tests — all from a single snippet on your site.
+          Conversion Path detects friction in your funnel, generates AI-powered hypotheses, and runs A/B tests — all from a single snippet on your site.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
@@ -73,12 +73,12 @@ export default function LandingPage() {
           <pre className="text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap">{`<head>
   <!-- Add to every page of your site -->
   <script
-    src="https://crolab.app/snippet.js"
+    src="https://conversionpath.com/snippet.js"
     data-key="pk_xxxxxxxxxxxxxxxxxxxx"
     async
   ></script>
 </head>`}</pre>
-          <p className="text-xs text-gray-500 mt-4">That&apos;s it. CRO Lab handles the rest.</p>
+          <p className="text-xs text-gray-500 mt-4">That&apos;s it. Conversion Path handles the rest.</p>
         </div>
       </section>
 
@@ -89,7 +89,7 @@ export default function LandingPage() {
             Everything you need to grow conversions
           </h2>
           <p className="text-gray-500 text-center mb-16 max-w-xl mx-auto">
-            From detecting friction to shipping winning variants — CRO Lab automates the hard parts of optimization.
+            From detecting friction to shipping winning variants — Conversion Path automates the hard parts of optimization.
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -117,7 +117,7 @@ export default function LandingPage() {
           {[
             { step: "1", title: "Install snippet", desc: "Paste one script tag in your site's <head>. Works on Shopify, HTML, Next.js, and more." },
             { step: "2", title: "Connect analytics", desc: "Link GA4, Clarity, Search Console, and Shopify in minutes via OAuth." },
-            { step: "3", title: "Get AI insights", desc: "CRO Lab finds friction and suggests tests ranked by projected revenue impact." },
+            { step: "3", title: "Get AI insights", desc: "Conversion Path finds friction and suggests tests ranked by projected revenue impact." },
             { step: "4", title: "Ship winners", desc: "Launch tests, watch Bayesian stats update in real time, and ship the winning variant." },
           ].map((s) => (
             <div key={s.step} className="text-center">
@@ -145,11 +145,11 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-gray-600">
             <FlaskConical size={16} />
-            <span className="text-sm font-medium">CRO Lab</span>
+            <span className="text-sm font-medium">Conversion Path</span>
           </div>
           <div className="flex gap-6 text-sm text-gray-400">
             <Link href="/pricing" className="hover:text-gray-600 transition-colors">Pricing</Link>
-            <a href="mailto:hello@crolab.app" className="hover:text-gray-600 transition-colors">Contact</a>
+            <a href="mailto:hello@conversionpath.com" className="hover:text-gray-600 transition-colors">Contact</a>
             <Link href="/login" className="hover:text-gray-600 transition-colors">Sign in</Link>
           </div>
         </div>

@@ -1,0 +1,46 @@
+diff a/src/app/api/auth/shopify/callback/route.ts b/src/app/api/auth/shopify/callback/route.ts	(rejected hunks)
+@@ -1,6 +1,6 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import crypto from "crypto";
+-import { prisma } from "@/lib/db";
++import { prisma } from "@/lib/prisma";
+ import { IntegrationType } from "@prisma/client";
+ 
+ /**
+@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
+   }
+ 
+   // Parse state
+-  let state: { userId: string; nonce: string };
++  let state: { orgId: string; nonce: string };
+   try {
+     state = JSON.parse(stateRaw);
+   } catch {
+@@ -95,23 +95,21 @@ export async function GET(request: NextRequest) {
+ 
+     // Upsert integration record
+     const existing = await prisma.integration.findFirst({
+-      where: { userId: state.userId, type: IntegrationType.SHOPIFY },
++      where: { organizationId: state.orgId, type: IntegrationType.SHOPIFY },
+       select: { id: true },
+     });
+ 
+     await prisma.integration.upsert({
+-      where: {
+-        id: existing?.id ?? "00000000-0000-0000-0000-000000000000",
+-      },
++      where: { id: existing?.id ?? "00000000-0000-0000-0000-000000000000" },
+       update: {
+         accessToken: tokenData.access_token,
+-        refreshToken: null, // Shopify tokens don't expire
++        refreshToken: null,
+         expiresAt: null,
+         metadata: { shop, scope: tokenData.scope },
+         enabled: true,
+       },
+       create: {
+-        userId: state.userId,
++        organizationId: state.orgId,
+         type: IntegrationType.SHOPIFY,
+         accessToken: tokenData.access_token,
+         refreshToken: null,

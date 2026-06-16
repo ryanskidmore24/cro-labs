@@ -1,0 +1,20 @@
+diff a/package.json b/package.json	(rejected hunks)
+@@ -17,8 +17,8 @@
+     "@anthropic-ai/sdk": "^0.39.0",
+     "@google/generative-ai": "^0.21.0",
+     "@prisma/client": "^6.2.0",
+-    "@supabase/supabase-js": "^2.49.0",
+     "@supabase/ssr": "^0.5.0",
++    "@supabase/supabase-js": "^2.49.0",
+     "class-variance-authority": "^0.7.1",
+     "clsx": "^2.1.1",
+     "googleapis": "^144.0.0",
+@@ -31,6 +31,8 @@
+     "react-dnd-html5-backend": "^16.0.1",
+     "react-dom": "19.2.4",
+     "recharts": "^2.15.0",
++    "resend": "^6.12.4",
++    "stripe": "^22.2.0",
+     "tailwind-merge": "^2.6.0",
+     "uuid": "^11.0.0",
+     "zod": "^3.24.0"

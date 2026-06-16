@@ -52,7 +52,7 @@ function LoginForm() {
           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
             <FlaskConical size={24} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">CRO Lab</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Conversion Path</h1>
           <p className="text-sm text-gray-500 mt-1">
             AI-powered conversion rate optimization
           </p>

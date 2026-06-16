@@ -1,0 +1,19 @@
+diff a/src/components/shared/DashboardLayout.tsx b/src/components/shared/DashboardLayout.tsx	(rejected hunks)
+@@ -19,6 +19,8 @@ import {
+   Archive,
+   LogOut,
+   Code2,
++  Users,
++  CreditCard,
+ } from "lucide-react";
+ 
+ const NAV_ITEMS = [
+@@ -43,6 +45,8 @@ const NAV_ITEMS = [
+     icon: Settings,
+     children: [
+       { label: "Snippet", href: "/settings/snippet", icon: Code2 },
++      { label: "Team", href: "/settings/team", icon: Users },
++      { label: "Billing", href: "/settings/billing", icon: CreditCard },
+     ],
+   },
+ ];

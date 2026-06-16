@@ -154,7 +154,7 @@ export default function BillingPage() {
                 </div>
               ) : plan.key === "ENTERPRISE" ? (
                 <a
-                  href="mailto:hello@crolab.app"
+                  href="mailto:hello@conversionpath.com"
                   className="text-center py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                 >
                   Contact us
